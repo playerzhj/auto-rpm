@@ -1,7 +1,6 @@
 #!/bin/sh
 
 TOP_DIR=".rpm_create"
-CRON_DIR="/etc/cron.d"
 DFT_PREFIX="/home/a"
 DFT_RELEASE=1
 DFT_VERSION=0.0.1
@@ -57,13 +56,8 @@ if [ -n "$CALLER" ];then
 else
 	echo "%packager " `whoami` >> $RPM_MACROS
 fi
-echo "%vendor TaoBao Inc." >> $RPM_MACROS
-echo "%_svn_path $svn_path" >> $RPM_MACROS
-echo "%_svn_revision $svn_revision" >> $RPM_MACROS
 echo "%_version $version" >> $RPM_MACROS
 echo "%_release $release" >> $RPM_MACROS
-echo "%_crondir $CRON_DIR" >> $RPM_MACROS
-echo "%_crontab ./$CRON_DIR/%{name}" >> $RPM_MACROS
 # Disable the checking of missing package files
 # For detail: http://www.oldrpm.org/hintskinks/unpackaged/
 echo "%_unpackaged_files_terminate_build 0" >> $RPM_MACROS

@@ -45,7 +45,7 @@ cd $OLDPWD/.. && make dist
 #../configure ----prefix=%{_sysconfdir}/httpd .......
 
 
-# 安装步骤， 注意%{_prefix}前的.不能省略，代表当前目录，当前操作是在.rpm的目录中进行的，并非是绝对路径。
+# 安装步骤， 注意%{_prefix}前的.不能省略，代表当前目录，当前操作是在.rpm的目录中进行的，并非是绝对路径
 %install
 cp -rf $OLDPWD/../_dist/* .%{_prefix}
 
@@ -53,7 +53,7 @@ cp -rf $OLDPWD/../_dist/* .%{_prefix}
 #mkdir -p .%{_prefix}/../../../usr/local/bin
 #cp .%{_prefix}/lz_rpm_init .%{_prefix}/../../../usr/local/bin/
 
-# 安装的文件，在卸载的时候会删除掉，尽量少用*替换符，避免在卸载的时候删错文件，此时需要绝对路径，因为文件已经在安装的时候拷贝到相应的绝对路径中。
+# 安装的文件，在卸载的时候会删除掉，尽量少用*替换符，避免在卸载的时候删错文件，此时需要绝对路径，因为文件已经在安装的时候拷贝到相应的绝对路径中
 %files
 %defattr(755,admin,admin)
 %{_prefix}

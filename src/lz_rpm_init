@@ -87,7 +87,7 @@ if [ $mini_install -eq 1 ];then
 	cp -rf "${sourcepath}/rpm" "${target}/${target_dir_name}/"
 	cp -f "${sourcepath}/test-rpm.sh" "${target}/${target_dir_name}/"
 else
-	cp -rf $sourcepath ${target}/${target_dir_name}
+	cp -rf $sourcepath/* ${target}/${target_dir_name}/
 fi
 
 if [ $? -ne 0 ];then
