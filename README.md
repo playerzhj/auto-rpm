@@ -12,3 +12,6 @@ auto-rpm -> Generate all the files used for creating a rpm
 * sh test-rpm.sh 执行这个命令会打出auto-rpm的软件安装包，在rpm文件夹下
 * 安装生成的rpm包 rpm -ivh auto-rpm-build
 * 然后执行lz_init_rpm -h 会有具体的使用方式
+
+## TODO
+
