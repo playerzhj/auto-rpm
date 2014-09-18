@@ -1,0 +1,100 @@
+#!/bin/sh
+
+TOP_DIR=".rpm_create"
+CRON_DIR="/etc/cron.d"
+DFT_PREFIX="/home/a"
+DFT_RELEASE=1
+DFT_VERSION=0.0.1
+
+LANG=C
+export LANG
+
+usage()
+{
+  echo "Usage:"
+  echo "  rpm_create -p <\$PREFIX> -v <version number> -r <release number> -t <target> -k"
+  echo "Default prefix is: /home/a"
+  echo "Default version number is: 0.0.1"
+  echo "Default release number is: 1"
+  echo "Default target is: 'uname -p', and target maybe: i686-redhat-linux"
+  echo "-k: keep the dir of arch"
+  exit 0
+}
+
+prefix=${PREFIX:-${DFT_PREFIX}}
+release=${RELEASE:-${DFT_RELEASE}}
+version=${VERSION:-${DFT_VERSION}}
+
+TEMP=`getopt -o p:v:r:t:hk -- "$@"`
+eval set -- "$TEMP"
+
+keep=0
+while true ; do
+  case "$1" in
+    -k) keep=1; shift ;;
+    -h) usage; shift ;;
+    -p) prefix=$2; shift 2 ;;
+    -v) version=$2; shift 2 ;;
+    -r) release=$2; shift 2 ;;
+    -t) target=$2; shift 2 ;;
+    --) shift; break;;
+    *) echo "Internal error!"; exit 1;;
+  esac
+done
+
+
+RPM_MACROS=$HOME/.rpmmacros
+if [ -e $RPM_MACROS ]; then
+  mv -f $RPM_MACROS $RPM_MACROS.bak
+fi
+
+ABS_PATH=`pwd`
+
+echo "%_topdir $ABS_PATH/$TOP_DIR" > $RPM_MACROS
+echo "%_prefix $prefix" >> $RPM_MACROS
+if [ -n "$CALLER" ];then
+	echo "%packager $CALLER"  >> $RPM_MACROS
+else
+	echo "%packager " `whoami` >> $RPM_MACROS
+fi
+echo "%_version $version" >> $RPM_MACROS
+echo "%_release $release" >> $RPM_MACROS
+# Disable the checking of missing package files
+# For detail: http://www.oldrpm.org/hintskinks/unpackaged/
+echo "%_unpackaged_files_terminate_build 0" >> $RPM_MACROS
+if [ -n "$target" ]; then
+  echo $target | grep "64" 2>&1 >/dev/null
+  if [ $? -ne 0 ]; then
+    echo "%_lib lib" >> $RPM_MACROS
+  fi
+fi
+
+if [ $# -gt 0 ]; then
+  specs=$@
+else
+  specs=`ls *.spec 2>/dev/null`
+fi
+
+if [ -n "$target" ]; then
+  target="--target $target"
+fi
+
+for i in $specs; do
+#trap "rm -rf $TOP_DIR" 0
+  rm -rf $TOP_DIR
+  mkdir -p $TOP_DIR/RPMS
+  mkdir -p $TOP_DIR/BUILD/$prefix
+  mkdir -p $TOP_DIR/BUILD/$CRON_DIR
+
+  VERSION=$version RELEASE=$release rpmbuild -bb $target --buildroot $ABS_PATH/$TOP_DIR/BUILD $i
+  if [ $keep -eq 0 ];then
+    find $TOP_DIR/RPMS -name "*.rpm"  -exec mv {} . \;
+  else
+    cp -rf $TOP_DIR/RPMS/* .
+  fi
+done
+
+rm -rf $TOP_DIR $RPM_MACROS
+if [ -e $RPM_MACROS.bak ]; then
+  mv -f $RPM_MACROS.bak $RPM_MACROS
+fi

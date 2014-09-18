@@ -1,0 +1,103 @@
+#!/bin/sh
+
+sourcepath="/home/admin/lz_auto_rpm"
+target_dir_name="lz_auto_rpm"
+
+function usage()
+{
+  echo "-------------------------------------------------------------------"
+  echo "Usage:"
+  echo "	-t	目标文件夹名称,项目根目录"
+  echo "	-p	项目rpm包名"
+  echo "	-m	是否最小化安装，默认标准安装"
+  echo "	-h	帮助"
+  echo "Example:"
+  echo "	lz_rpm_init -t <\$target_dir_name> -p <\$rpm_package_name> -h -m"
+  echo "Tips:"
+  echo "	\"lz_rpm_init\" will install files in current/working derectory.The default [target_dir_name] is \"lz_auto_rpm\"."
+  echo "-------------------------------------------------------------------"
+  exit 0
+}
+
+function changepkgname()
+{
+	temp_test_file="$2/test-rpm.sh"
+	
+	# 修改test-rpm.sh中名称
+	if [ -e "$temp_test_file" ];then
+		sed -i 's/^pkgname=\".*\"$/pkgname=\"'$1'\"/' $temp_test_file
+	fi
+	
+	# 修改build文件
+	temp_build_file="$2/rpm/pkgname-build.sh"
+	new_build_file="$2/rpm/${1}-build.sh"
+
+	if [ -e "$temp_build_file" ];then
+		mv $temp_build_file $new_build_file
+	fi
+
+	# 修改build文件
+	temp_spec_file="$2/rpm/pkgname.spec"
+	new_spec_file="$2/rpm/${1}.spec"
+
+	if [ -e "$temp_spec_file" ];then
+		sed -i 's/^Name:.*$/Name: '$1'/' $temp_spec_file
+		mv $temp_spec_file $new_spec_file
+	fi
+
+}
+
+if [ ! -d "$sourcepath" ]; then
+	echo "The directory /home/admin/lz_auto_rpm is gone! You can install it again~"
+	exit 0;
+fi
+
+target=`pwd`
+mini_install=0;
+
+while getopts :t:p:hm optname; do
+  case "$optname" in
+    h) usage ;;
+    t) target_dir_name=$OPTARG ;;
+	p) rpm_package_name=$OPTARG ;;
+	m) mini_install=1 ;;
+	:) echo ">>> Error: '-$OPTARG' requires an argument"; exit 1 ;;
+	\?) usage ;;
+  esac
+done
+
+if [ $? -ne 0 ];then
+	exit
+fi
+
+if [ -d "${target}/${target_dir_name}" ];then
+	echo -n "The directory [${target}/${target_dir_name}] already exists. Do you want to cover it? [yes/n]"
+	read is_cover
+	if [ -z "$is_cover" -o  "$is_cover" != "yes" ];then
+		echo "init failed"
+		exit
+	fi
+else
+	mkdir "${target}/${target_dir_name}"
+fi
+
+if [ $mini_install -eq 1 ];then
+	cp -rf "${sourcepath}/src" "${target}/${target_dir_name}/"
+	cp -f "${sourcepath}/Makefile" "${target}/${target_dir_name}/"
+	cp -rf "${sourcepath}/rpm" "${target}/${target_dir_name}/"
+	cp -f "${sourcepath}/test-rpm.sh" "${target}/${target_dir_name}/"
+else
+	cp -rf $sourcepath ${target}/${target_dir_name}
+fi
+
+if [ $? -ne 0 ];then
+	echo "copy action failed,please check try again!"
+	exit 1	
+fi
+
+if [ ! -z "$rpm_package_name" ]; then
+	changepkgname $rpm_package_name "${target}/${target_dir_name}"
+fi
+
+echo "success!"
+echo "The project root directory is [${target}/${target_dir_name}]"
